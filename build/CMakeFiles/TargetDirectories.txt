@@ -1,3 +1,0 @@
-/home/xiaoyu/workspace/ConvolutionBackward/build/CMakeFiles/convolution_backward.dir
-/home/xiaoyu/workspace/ConvolutionBackward/build/CMakeFiles/edit_cache.dir
-/home/xiaoyu/workspace/ConvolutionBackward/build/CMakeFiles/rebuild_cache.dir
