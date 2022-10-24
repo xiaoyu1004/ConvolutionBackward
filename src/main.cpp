@@ -12,14 +12,18 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
                   int dilation_h, int dilation_w,
                   int group)
 {
-    // malloc device
     int x_size = input_n * input_c * input_h * input_w;
+#ifdef ENABLE_CUDA
+    // malloc device
     float *d_x;
     CUDA_CHECK(cudaMalloc(&d_x, x_size * sizeof(float)));
+#endif
 
     int w_size = output_c * input_c * kernel_h * kernel_w;
+#ifdef ENABLE_CUDA
     float *d_w;
     CUDA_CHECK(cudaMalloc(&d_w, w_size * sizeof(float)));
+#endif
 
     int khd = (kernel_h - 1) * dilation_h + 1;
     int kwd = (kernel_w - 1) * dilation_w + 1;
@@ -27,30 +31,36 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
     int output_w = (input_w - kwd + 2 * pad_w) / stride_w + 1;
 
     int y_size = input_n * output_c * output_h * output_w;
+#ifdef ENABLE_CUDA
     float *d_y;
     CUDA_CHECK(cudaMalloc(&d_y, y_size * sizeof(float)));
+#endif
 
     // malloc host
     float *h_x = new float[x_size]{0};
+#ifdef ENABLE_CUDA
     float *h_w = new float[w_size]{0};
+#endif
     float *h_ref_w = new float[w_size]{0};
     float *h_y = new float[y_size]{0};
 
     // init x
     for (int i = 0; i < x_size; ++i)
     {
-        h_x[i] = static_cast<float>(i % 10);
+        h_x[i] = static_cast<float>(x_data[i % 280]);
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
-        h_y[i] = static_cast<float>(i % 5);
+        h_y[i] = static_cast<float>(1.f);
     }
 
+#ifdef ENABLE_CUDA
     // memcpy host -> device
     CUDA_CHECK(cudaMemcpy(d_x, h_x, x_size * sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(d_y, h_y, y_size * sizeof(float), cudaMemcpyHostToDevice));
+#endif
 
     // cpu
     ConvolutionBackwardFilterCpu(input_n, input_c, input_h, input_w,
@@ -62,6 +72,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
                                  kernel_h, kernel_w,
                                  h_x, h_y, h_ref_w);
 
+#ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN
     // gpu
     float alpha = 1.f;
@@ -98,7 +109,9 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
 
     CUDA_CHECK(cudaMemcpy(h_w, d_w, w_size * sizeof(float), cudaMemcpyDeviceToHost));
 #endif
+#endif
 
+#ifdef ENABLE_CUDA
     // compare
     for (int i = 0; i < w_size; ++i)
     {
@@ -110,6 +123,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
         }
     }
     std::cout << "compare pass!" << std::endl;
+#endif
 
 #ifdef ENABLE_LOG
     std::cout << "cpu:" << std::endl;
@@ -130,6 +144,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
         std::cout << "\n";
     }
 
+#ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN
     std::cout << "gpu(cudnn):" << std::endl;
     for (int n = 0; n < output_c; ++n)
@@ -149,19 +164,26 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
         std::cout << "\n";
     }
 #endif // ENABLE_CUDNN
+#endif // ENABLE_CUDA
 #endif // ENABLE_LOG
 
+#ifdef ENABLE_CUDA
     // free
     CUDA_CHECK(cudaFree(d_x));
     CUDA_CHECK(cudaFree(d_w));
     CUDA_CHECK(cudaFree(d_y));
+#endif
 
+#ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN
     CUDA_CHECK(cudaFree(workSpace));
 #endif
+#endif
 
     delete[] h_x;
+#ifdef ENABLE_CUDA
     delete[] h_w;
+#endif
     delete[] h_ref_w;
     delete[] h_y;
 }
@@ -170,7 +192,9 @@ int main()
 {
     std::vector<std::map<std::string, int>> conv_data =
         {
-            {{"n", 2}, {"c", 3}, {"h", 4}, {"w", 4}, {"oc", 2}, {"kh", 3}, {"kw", 3}, {"sh", 1}, {"sw", 1}, {"ph", 0}, {"pw", 0}, {"dh", 1}, {"dw", 1}, {"g", 1}}};
+            // {{"n", 2}, {"c", 3}, {"h", 4}, {"w", 4}, {"oc", 2}, {"kh", 3}, {"kw", 3}, {"sh", 1}, {"sw", 1}, {"ph", 0}, {"pw", 0}, {"dh", 1}, {"dw", 1}, {"g", 1}}
+            {{"n", 32}, {"c", 64}, {"h", 224}, {"w", 224}, {"oc", 64}, {"kh", 3}, {"kw", 3}, {"sh", 1}, {"sw", 1}, {"ph", 1}, {"pw", 1}, {"dh", 1}, {"dw", 1}, {"g", 1}}
+        };
 
     for (std::map<std::string, int> &m : conv_data)
     {

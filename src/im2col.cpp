@@ -22,7 +22,7 @@ void im2col_cpu(int input_c, int input_h, int input_w,
             int oh = w / output_w;
             int ow = w % output_w;
             
-            int val = 0;
+            float val = 0;
             int ih = oh * stride_h + kh - pad_h;
             int iw = ow * stride_w + kw - pad_w;
             if (ih >= 0 && ih < input_h && iw >= 0 && iw < input_w)
