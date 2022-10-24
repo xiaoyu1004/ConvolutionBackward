@@ -47,13 +47,13 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
     // init x
     for (int i = 0; i < x_size; ++i)
     {
-        h_x[i] = static_cast<float>(x_data[i % 280]);
+        h_x[i] = static_cast<float>(i % 4); // x_data[i % 280]
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
-        h_y[i] = static_cast<float>(1.f);
+        h_y[i] = static_cast<float>(i % 3); // 1.f
     }
 
 #ifdef ENABLE_CUDA
@@ -62,6 +62,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
     CUDA_CHECK(cudaMemcpy(d_y, h_y, y_size * sizeof(float), cudaMemcpyHostToDevice));
 #endif
 
+#ifdef ENABLE_CPU
     // cpu
     ConvolutionBackwardFilterCpu(input_n, input_c, input_h, input_w,
                                  stride_h, stride_w,
@@ -71,6 +72,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
                                  output_c, output_h, output_w,
                                  kernel_h, kernel_w,
                                  h_x, h_y, h_ref_w);
+#endif
 
 #ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN
@@ -111,6 +113,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
 #endif
 #endif
 
+#ifdef ENABLE_CPU
 #ifdef ENABLE_CUDA
     // compare
     for (int i = 0; i < w_size; ++i)
@@ -124,8 +127,10 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
     }
     std::cout << "compare pass!" << std::endl;
 #endif
+#endif
 
 #ifdef ENABLE_LOG
+#ifdef ENABLE_CPU
     std::cout << "cpu:" << std::endl;
     for (int n = 0; n < output_c; ++n)
     {
@@ -143,6 +148,7 @@ void TestBackward(int input_n, int input_c, int input_h, int input_w,
         }
         std::cout << "\n";
     }
+#endif
 
 #ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN

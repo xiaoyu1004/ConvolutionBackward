@@ -1,12 +1,21 @@
 cmake_minimum_required(VERSION 3.10)
-project(convolution_backward LANGUAGES CXX) # CUDA
+project(convolution_backward LANGUAGES CXX)
+
+if(ENABLE_CUDA)
+    enable_language(CUDA)
+endif()
 
 option(ENABLE_LOG "enable log" ON)
+option(ENABLE_CPU "enable cpu" ON)
 option(ENABLE_CUDA "enable cuda" ON)
 option(ENABLE_CUDNN "enable cudnn" ON)
 
 if(ENABLE_LOG)
     add_definitions(-DENABLE_LOG)
+endif()
+
+if(ENABLE_CPU)
+    add_definitions(-DENABLE_CPU)
 endif()
 
 if(ENABLE_CUDA)
@@ -24,7 +33,7 @@ set(srcs ./src/backward_filter.cpp
          ./src/main.cpp)
 
 if(ENABLE_CUDA)
-    set(APPEND srcs ./src/cuda/backward_filter.cu)
+    list(APPEND srcs ./src/cuda/backward_filter.cu)
 endif()
 add_executable(${PROJECT_NAME} ${srcs})
 target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/cuda/include)

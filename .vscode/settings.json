@@ -64,7 +64,8 @@
     },
     "cmake.configureSettings": {
         "ENABLE_LOG": "ON",
-        "ENABLE_CUDA": "OFF",
-        "ENABLE_CUDNN": "OFF"
+        "ENABLE_CPU": "OFF",
+        "ENABLE_CUDA": "ON",
+        "ENABLE_CUDNN": "ON"
     }
 }
