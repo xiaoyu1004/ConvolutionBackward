@@ -2,7 +2,7 @@
     "breadcrumbs.enabled": false,
     "editor.minimap.enabled": false,
     "files.autoSave": "afterDelay",
-    "editor.fontSize": 15,
+    "editor.fontSize": 16,
     "files.associations": {
         "array": "cpp",
         "atomic": "cpp",
@@ -64,7 +64,7 @@
     },
     "cmake.configureSettings": {
         "ENABLE_LOG": "ON",
-        "ENABLE_CPU": "OFF",
+        "ENABLE_CPU": "ON",
         "ENABLE_CUDA": "ON",
         "ENABLE_CUDNN": "ON"
     }

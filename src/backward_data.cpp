@@ -1,52 +1,61 @@
 #include "common.h"
-#include "backward_filter.h"
-#include "im2col.h"
+#include "backward_data.h"
+#include "col2im.h"
 #include "gemm.h"
 
-void ConvolutionBackwardFilterCpu(int input_n, int input_c, int input_h, int input_w,
-                                  int stride_h, int stride_w,
-                                  int pad_h, int pad_w,
-                                  int dilation_h, int dilation_w,
-                                  int group,
-                                  int output_c, int output_h, int output_w,
-                                  int kernel_h, int kernel_w,
-                                  float *x, float *y, float *w)
+void ConvolutionBackwardDataCpu(int input_n, int input_c, int input_h, int input_w,
+                                int stride_h, int stride_w,
+                                int pad_h, int pad_w,
+                                int dilation_h, int dilation_w,
+                                int group,
+                                int output_c, int output_h, int output_w,
+                                int kernel_h, int kernel_w,
+                                float *w, float *y, float *x)
 {
-    int M = output_c;
-    int N = kernel_h * kernel_w * input_c;
-    int K = output_h * output_w;
+    int M = kernel_h * kernel_w * input_c;
+    int N = output_h * output_w;
+    int K = output_c;
 
-    float *workspace = new float[K * N];
+    int lda = M;
+    int ldb = N;
+    int ldc = N;
+
+    float alpha = 1.f;
+    float beta = 0.f;
+
+    float *workspace = new float[M * N];
+
     for (int n = 0; n < input_n; ++n)
     {
+        int y_offset = n * output_c * output_h * output_w;
         int x_offset = n * input_c * input_h * input_w;
-        im2col_cpu(input_c, input_h, input_w,
+        cpu_gemm(true, false, M, N, K, alpha, w, lda, y + y_offset, ldb, beta, workspace, ldc);
+        col2im_cpu(input_c, input_h, input_w,
                    stride_h, stride_w,
                    pad_h, pad_w,
                    dilation_h, dilation_w,
                    group,
                    kernel_h, kernel_w,
                    output_h, output_w,
-                   x + x_offset, workspace);
-        int y_offset = n * output_c * output_h * output_w;
-        cpu_gemm(false, true, M, N, K, 1.f, y + y_offset, K, workspace, K, 0.f, w, N);
+                   workspace, x + x_offset);
     }
 
     delete[] workspace;
 }
 
-void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_w,
-                               int output_c, int kernel_h, int kernel_w,
-                               int stride_h, int stride_w,
-                               int pad_h, int pad_w,
-                               int dilation_h, int dilation_w,
-                               int group)
+void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
+                             int output_c, int kernel_h, int kernel_w,
+                             int stride_h, int stride_w,
+                             int pad_h, int pad_w,
+                             int dilation_h, int dilation_w,
+                             int group)
 {
     int x_size = input_n * input_c * input_h * input_w;
 #ifdef ENABLE_CUDA
     // malloc device
     float *d_x;
     CUDA_CHECK(cudaMalloc(&d_x, x_size * sizeof(float)));
+    CUDA_CHECK(cudaMemset(d_x, 0, x_size * sizeof(float)));
 #endif
 
     int w_size = output_c * input_c * kernel_h * kernel_w;
@@ -67,17 +76,17 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 #endif
 
     // malloc host
-    float *h_x = new float[x_size]{0};
-#ifdef ENABLE_CUDA
     float *h_w = new float[w_size]{0};
-#endif
-    float *h_ref_w = new float[w_size]{0};
     float *h_y = new float[y_size]{0};
+#ifdef ENABLE_CUDA
+    float *h_x = new float[x_size]{0};
+#endif
+    float *h_ref_x = new float[x_size]{0};
 
-    // init x
-    for (int i = 0; i < x_size; ++i)
+    // init w
+    for (int i = 0; i < w_size; ++i)
     {
-        h_x[i] = static_cast<float>(i % 4); // x_data[i % 280]
+        h_w[i] = static_cast<float>(i % 4); // x_data[i % 280]
     }
 
     // init y
@@ -88,20 +97,20 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 
 #ifdef ENABLE_CUDA
     // memcpy host -> device
-    CUDA_CHECK(cudaMemcpy(d_x, h_x, x_size * sizeof(float), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_w, h_w, w_size * sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(d_y, h_y, y_size * sizeof(float), cudaMemcpyHostToDevice));
 #endif
 
 #ifdef ENABLE_CPU
     // cpu
-    ConvolutionBackwardFilterCpu(input_n, input_c, input_h, input_w,
-                                 stride_h, stride_w,
-                                 pad_h, pad_w,
-                                 dilation_h, dilation_w,
-                                 group,
-                                 output_c, output_h, output_w,
-                                 kernel_h, kernel_w,
-                                 h_x, h_y, h_ref_w);
+    ConvolutionBackwardDataCpu(input_n, input_c, input_h, input_w,
+                               stride_h, stride_w,
+                               pad_h, pad_w,
+                               dilation_h, dilation_w,
+                               group,
+                               output_c, output_h, output_w,
+                               kernel_h, kernel_w,
+                               h_w, h_y, h_ref_x);
 #endif
 
 #ifdef ENABLE_CUDA
@@ -126,12 +135,12 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     CUDNN_CHECK(cudnnCreateConvolutionDescriptor(&convDesc));
     CUDNN_CHECK(cudnnSetConvolution2dDescriptor(convDesc, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 
-    cudnnConvolutionBwdFilterAlgo_t algo = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+    cudnnConvolutionBwdDataAlgo_t algo = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
     size_t workspace_size;
-    CUDNN_CHECK(cudnnGetConvolutionBackwardFilterWorkspaceSize(handle, xDesc, yDesc, convDesc, wDesc, algo, &workspace_size));
+    CUDNN_CHECK(cudnnGetConvolutionBackwardDataWorkspaceSize(handle, wDesc, yDesc, convDesc, xDesc, algo, &workspace_size));
     float *workSpace;
     CUDA_CHECK(cudaMalloc(&workSpace, workspace_size));
-    CUDNN_CHECK(cudnnConvolutionBackwardFilter(handle, &alpha, xDesc, d_x, yDesc, d_y, convDesc, algo, workSpace, workspace_size, &beta, wDesc, d_w));
+    CUDNN_CHECK(cudnnConvolutionBackwardData(handle, &alpha, wDesc, d_w, yDesc, d_y, convDesc, algo, workSpace, workspace_size, &beta, xDesc, d_x));
 
     CUDNN_CHECK(cudnnDestroy(handle));
     CUDNN_CHECK(cudnnDestroyFilterDescriptor(wDesc));
@@ -139,19 +148,19 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     CUDNN_CHECK(cudnnDestroyTensorDescriptor(yDesc));
     CUDNN_CHECK(cudnnDestroyConvolutionDescriptor(convDesc));
 
-    CUDA_CHECK(cudaMemcpy(h_w, d_w, w_size * sizeof(float), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(h_x, d_x, x_size * sizeof(float), cudaMemcpyDeviceToHost));
 #endif
 #endif
 
 #ifdef ENABLE_CPU
 #ifdef ENABLE_CUDA
     // compare
-    for (int i = 0; i < w_size; ++i)
+    for (int i = 0; i < x_size; ++i)
     {
-        float err = std::abs(h_w[i] - h_ref_w[i]);
+        float err = std::abs(h_x[i] - h_ref_x[i]);
         if (err > 1e-4f)
         {
-            std::cout << "ERROR: h_w[" << i << "]=" << h_w[i] << " != h_ref_w[" << i << "]=" << h_ref_w[i] << std::endl;
+            std::cout << "ERROR: h_x[" << i << "]=" << h_x[i] << " != h_ref_x[" << i << "]=" << h_ref_x[i] << std::endl;
             std::terminate();
         }
     }
@@ -162,15 +171,15 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 #ifdef ENABLE_LOG
 #ifdef ENABLE_CPU
     std::cout << "cpu:" << std::endl;
-    for (int n = 0; n < output_c; ++n)
+    for (int n = 0; n < input_n; ++n)
     {
-        for (int i = 0; i < kernel_h; ++i)
+        for (int i = 0; i < input_h; ++i)
         {
             for (int j = 0; j < input_c; ++j)
             {
-                for (int k = 0; k < kernel_w; ++k)
+                for (int k = 0; k < input_w; ++k)
                 {
-                    std::cout << h_ref_w[n * kernel_h * kernel_w * input_c + j * kernel_h * kernel_w + i * kernel_w + k] << "\t";
+                    std::cout << h_ref_x[n * input_h * input_w * input_c + j * input_h * input_w + i * input_w + k] << "\t";
                 }
                 std::cout << "\t\t";
             }
@@ -183,15 +192,15 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 #ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN
     std::cout << "gpu(cudnn):" << std::endl;
-    for (int n = 0; n < output_c; ++n)
+    for (int n = 0; n < input_n; ++n)
     {
-        for (int i = 0; i < kernel_h; ++i)
+        for (int i = 0; i < input_h; ++i)
         {
             for (int j = 0; j < input_c; ++j)
             {
-                for (int k = 0; k < kernel_w; ++k)
+                for (int k = 0; k < input_w; ++k)
                 {
-                    std::cout << h_w[n * kernel_h * kernel_w * input_c + j * kernel_h * kernel_w + i * kernel_w + k] << "\t";
+                    std::cout << h_x[n * input_h * input_w * input_c + j * input_h * input_w + i * input_w + k] << "\t";
                 }
                 std::cout << "\t\t";
             }
@@ -216,10 +225,10 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 #endif
 #endif
 
-    delete[] h_x;
 #ifdef ENABLE_CUDA
-    delete[] h_w;
+    delete[] h_x;
 #endif
-    delete[] h_ref_w;
+    delete[] h_w;
     delete[] h_y;
+    delete[] h_ref_x;
 }

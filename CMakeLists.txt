@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(convolution_backward LANGUAGES CXX)
+set(CMAKE_CXX_FLAGS "-fsanitize=address")
 
 if(ENABLE_CUDA)
     enable_language(CUDA)
@@ -19,7 +20,7 @@ if(ENABLE_CPU)
 endif()
 
 if(ENABLE_CUDA)
-    set(CMAKE_CUDA_ARCHITECTURES 86)
+    set(CMAKE_CUDA_ARCHITECTURES 70)
     set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
     add_definitions(-DENABLE_CUDA)
     if(ENABLE_CUDNN)
@@ -28,8 +29,10 @@ if(ENABLE_CUDA)
 endif()
 
 set(srcs ./src/backward_filter.cpp
+         ./src/backward_data.cpp
          ./src/gemm.cpp
          ./src/im2col.cpp
+         ./src/col2im.cpp
          ./src/main.cpp)
 
 if(ENABLE_CUDA)
