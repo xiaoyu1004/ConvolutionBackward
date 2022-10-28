@@ -27,43 +27,37 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 41,
+				"line" : 40,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 44,
+				"line" : 43,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 19,
+				"line" : 18,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 25,
+				"line" : 24,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 27,
-				"parent" : 0
-			},
-			{
-				"command" : 2,
-				"file" : 0,
-				"line" : 15,
+				"line" : 26,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 42,
+				"line" : 41,
 				"parent" : 0
 			}
 		]
@@ -74,7 +68,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-fsanitize=address -g"
+					"fragment" : "-g"
 				}
 			],
 			"defines" : 
@@ -90,20 +84,16 @@
 				{
 					"backtrace" : 5,
 					"define" : "ENABLE_CUDNN"
-				},
-				{
-					"backtrace" : 6,
-					"define" : "ENABLE_LOG"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 7,
+					"backtrace" : 6,
 					"path" : "/home/jsshi/hongzhang.yu/ConvolutionBackward/./src"
 				},
 				{
-					"backtrace" : 7,
+					"backtrace" : 6,
 					"path" : "/usr/local/cuda/include"
 				}
 			],
@@ -141,20 +131,16 @@
 				{
 					"backtrace" : 5,
 					"define" : "ENABLE_CUDNN"
-				},
-				{
-					"backtrace" : 6,
-					"define" : "ENABLE_LOG"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 7,
+					"backtrace" : 6,
 					"path" : "/home/jsshi/hongzhang.yu/ConvolutionBackward/./src"
 				},
 				{
-					"backtrace" : 7,
+					"backtrace" : 6,
 					"path" : "/usr/local/cuda/include"
 				}
 			],
@@ -179,7 +165,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-fsanitize=address -g",
+				"fragment" : "-g",
 				"role" : "flags"
 			},
 			{

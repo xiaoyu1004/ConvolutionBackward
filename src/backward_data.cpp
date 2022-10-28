@@ -23,7 +23,7 @@ void ConvolutionBackwardDataCpu(int input_n, int input_c, int input_h, int input
     float alpha = 1.f;
     float beta = 0.f;
 
-    float *workspace = new float[M * N];
+    float *workspace = new float[M * N]{0};
 
     for (int n = 0; n < input_n; ++n)
     {
@@ -86,13 +86,13 @@ void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
     // init w
     for (int i = 0; i < w_size; ++i)
     {
-        h_w[i] = static_cast<float>(i % 4); // x_data[i % 280]
+        h_w[i] = static_cast<float>(1); // x_data[i % 280]
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
-        h_y[i] = static_cast<float>(i % 3); // 1.f
+        h_y[i] = static_cast<float>(1); // 1.f
     }
 
 #ifdef ENABLE_CUDA

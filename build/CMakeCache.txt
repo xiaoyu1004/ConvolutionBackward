@@ -210,7 +210,7 @@ ENABLE_CUDA:STRING=ON
 ENABLE_CUDNN:STRING=ON
 
 //enable log
-ENABLE_LOG:STRING=ON
+ENABLE_LOG:STRING=OFF
 
 //Value Computed by CMake
 convolution_backward_BINARY_DIR:STATIC=/home/jsshi/hongzhang.yu/ConvolutionBackward/build

@@ -1127,7 +1127,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "ON"
+			"value" : "OFF"
 		},
 		{
 			"name" : "convolution_backward_BINARY_DIR",

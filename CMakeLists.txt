@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 project(convolution_backward LANGUAGES CXX)
-set(CMAKE_CXX_FLAGS "-fsanitize=address")
 
 if(ENABLE_CUDA)
     enable_language(CUDA)
