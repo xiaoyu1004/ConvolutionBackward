@@ -63,7 +63,7 @@
         "__nullptr": "cpp"
     },
     "cmake.configureSettings": {
-        "ENABLE_LOG": "OFF",
+        "ENABLE_LOG": "ON",
         "ENABLE_CPU": "ON",
         "ENABLE_CUDA": "ON",
         "ENABLE_CUDNN": "ON"

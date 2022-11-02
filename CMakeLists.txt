@@ -35,7 +35,8 @@ set(srcs ./src/backward_filter.cpp
          ./src/main.cpp)
 
 if(ENABLE_CUDA)
-    list(APPEND srcs ./src/cuda/backward_filter.cu)
+    list(APPEND srcs ./src/cuda/backward_filter.cu
+                     ./src/cuda/backward_data.cu)
 endif()
 add_executable(${PROJECT_NAME} ${srcs})
 target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/cuda/include)

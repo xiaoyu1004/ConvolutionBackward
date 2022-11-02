@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cstring>
 
 #define CUDA_CHECK(err)                                                                                     \
     if (err != cudaSuccess)                                                                                 \

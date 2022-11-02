@@ -29,6 +29,7 @@ void ConvolutionBackwardDataCpu(int input_n, int input_c, int input_h, int input
     {
         int y_offset = n * output_c * output_h * output_w;
         int x_offset = n * input_c * input_h * input_w;
+        memset(workspace, 0, M * N * sizeof(float));
         cpu_gemm(true, false, M, N, K, alpha, w, lda, y + y_offset, ldb, beta, workspace, ldc);
         col2im_cpu(input_c, input_h, input_w,
                    stride_h, stride_w,
@@ -81,18 +82,21 @@ void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
 #ifdef ENABLE_CUDA
     float *h_x = new float[x_size]{0};
 #endif
+#ifdef ENABLE_CUDNN
+    float *h_dnn_x = new float[x_size]{0};
+#endif
     float *h_ref_x = new float[x_size]{0};
 
     // init w
     for (int i = 0; i < w_size; ++i)
     {
-        h_w[i] = static_cast<float>(1); // x_data[i % 280]
+        h_w[i] = static_cast<float>(i % 3); // x_data[i % 280]
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
-        h_y[i] = static_cast<float>(1); // 1.f
+        h_y[i] = static_cast<float>(i % 5); // 1.f
     }
 
 #ifdef ENABLE_CUDA
@@ -114,7 +118,18 @@ void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
 #endif
 
 #ifdef ENABLE_CUDA
+    ConvolutionBackwardDataGpu(input_n, input_c, input_h, input_w,
+                               stride_h, stride_w,
+                               pad_h, pad_w,
+                               dilation_h, dilation_w,
+                               group,
+                               output_c, output_h, output_w,
+                               kernel_h, kernel_w,
+                               d_w, d_y, d_x);
+    CUDA_CHECK(cudaMemcpy(h_x, d_x, x_size * sizeof(float), cudaMemcpyDeviceToHost));
+
 #ifdef ENABLE_CUDNN
+    CUDA_CHECK(cudaMemset(d_x, 0, x_size * sizeof(float)));
     // gpu
     float alpha = 1.f;
     float beta = 0.f;
@@ -148,9 +163,42 @@ void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
     CUDNN_CHECK(cudnnDestroyTensorDescriptor(yDesc));
     CUDNN_CHECK(cudnnDestroyConvolutionDescriptor(convDesc));
 
-    CUDA_CHECK(cudaMemcpy(h_x, d_x, x_size * sizeof(float), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(h_dnn_x, d_x, x_size * sizeof(float), cudaMemcpyDeviceToHost));
 #endif
 #endif
+
+#ifdef ENABLE_LOG
+#define PRINT_OUTPUT(device, ptr)                                                                                        \
+    std::cout << #device << ":" << std::endl;                                                                            \
+    for (int n = 0; n < input_n; ++n)                                                                                    \
+    {                                                                                                                    \
+        for (int i = 0; i < input_h; ++i)                                                                                \
+        {                                                                                                                \
+            for (int j = 0; j < input_c; ++j)                                                                            \
+            {                                                                                                            \
+                for (int k = 0; k < input_w; ++k)                                                                        \
+                {                                                                                                        \
+                    std::cout << ptr[n * input_h * input_w * input_c + j * input_h * input_w + i * input_w + k] << "\t"; \
+                }                                                                                                        \
+                std::cout << "\t\t";                                                                                     \
+            }                                                                                                            \
+            std::cout << std::endl;                                                                                      \
+        }                                                                                                                \
+        std::cout << "\n";                                                                                               \
+    }
+
+#ifdef ENABLE_CPU
+    PRINT_OUTPUT(cpu, h_ref_x);
+#endif
+
+#ifdef ENABLE_CUDA
+    PRINT_OUTPUT(gpu, h_x);
+#ifdef ENABLE_CUDNN
+    PRINT_OUTPUT(cudnn, h_dnn_x);
+#endif // ENABLE_CUDNN
+#endif // ENABLE_CUDA
+#undef PRINT_OUTPUT
+#endif // ENABLE_LOG
 
 #ifdef ENABLE_CPU
 #ifdef ENABLE_CUDA
@@ -168,50 +216,6 @@ void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
 #endif
 #endif
 
-#ifdef ENABLE_LOG
-#ifdef ENABLE_CPU
-    std::cout << "cpu:" << std::endl;
-    for (int n = 0; n < input_n; ++n)
-    {
-        for (int i = 0; i < input_h; ++i)
-        {
-            for (int j = 0; j < input_c; ++j)
-            {
-                for (int k = 0; k < input_w; ++k)
-                {
-                    std::cout << h_ref_x[n * input_h * input_w * input_c + j * input_h * input_w + i * input_w + k] << "\t";
-                }
-                std::cout << "\t\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << "\n";
-    }
-#endif
-
-#ifdef ENABLE_CUDA
-#ifdef ENABLE_CUDNN
-    std::cout << "gpu(cudnn):" << std::endl;
-    for (int n = 0; n < input_n; ++n)
-    {
-        for (int i = 0; i < input_h; ++i)
-        {
-            for (int j = 0; j < input_c; ++j)
-            {
-                for (int k = 0; k < input_w; ++k)
-                {
-                    std::cout << h_x[n * input_h * input_w * input_c + j * input_h * input_w + i * input_w + k] << "\t";
-                }
-                std::cout << "\t\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << "\n";
-    }
-#endif // ENABLE_CUDNN
-#endif // ENABLE_CUDA
-#endif // ENABLE_LOG
-
 #ifdef ENABLE_CUDA
     // free
     CUDA_CHECK(cudaFree(d_x));
@@ -222,6 +226,7 @@ void ConvolutionBackwardData(int input_n, int input_c, int input_h, int input_w,
 #ifdef ENABLE_CUDA
 #ifdef ENABLE_CUDNN
     CUDA_CHECK(cudaFree(workSpace));
+    delete[] h_dnn_x;
 #endif
 #endif
 
