@@ -1,3 +1,0 @@
-/home/jsshi/hongzhang.yu/ConvolutionBackward/build/CMakeFiles/convolution_backward.dir
-/home/jsshi/hongzhang.yu/ConvolutionBackward/build/CMakeFiles/edit_cache.dir
-/home/jsshi/hongzhang.yu/ConvolutionBackward/build/CMakeFiles/rebuild_cache.dir
