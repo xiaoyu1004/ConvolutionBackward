@@ -126,7 +126,7 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     CUDNN_CHECK(cudnnCreateConvolutionDescriptor(&convDesc));
     CUDNN_CHECK(cudnnSetConvolution2dDescriptor(convDesc, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 
-    cudnnConvolutionBwdFilterAlgo_t algo = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+    cudnnConvolutionBwdFilterAlgo_t algo = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED;
     size_t workspace_size;
     CUDNN_CHECK(cudnnGetConvolutionBackwardFilterWorkspaceSize(handle, xDesc, yDesc, convDesc, wDesc, algo, &workspace_size));
     float *workSpace;
@@ -146,16 +146,26 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 #ifdef ENABLE_CPU
 #ifdef ENABLE_CUDA
     // compare
+    float L2 = 0.F;
     for (int i = 0; i < w_size; ++i)
     {
-        float err = std::abs(h_w[i] - h_ref_w[i]);
-        if (err > 1e-4f)
-        {
-            std::cout << "ERROR: h_w[" << i << "]=" << h_w[i] << " != h_ref_w[" << i << "]=" << h_ref_w[i] << std::endl;
-            std::terminate();
-        }
+        L2 += std::pow(h_w[i] - h_ref_w[i], 2);
+
+        // if (err > 1e-1f)
+        // {
+        //     std::cout << std::setprecision(10) << "ERROR: h_w[" << i << "]=" << h_w[i] << " != h_ref_w[" << i << "]=" << h_ref_w[i] << std::endl;
+        //     std::terminate();
+        // }
     }
-    std::cout << "compare pass!" << std::endl;
+
+    L2 = std::sqrt(L2);
+    bool bres = L2 > 1e-2f;
+    if (bres)
+    {
+        std::cout << std::setprecision(10) << "ERROR: " << L2 << std::endl;
+    }
+
+    std::cout << "compare " << (bres ? "failed" : "pass") << "!" << std::endl;
 #endif
 #endif
 

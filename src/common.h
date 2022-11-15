@@ -11,6 +11,8 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
+#include <iomanip>
+#include <cmath>
 
 #define CUDA_CHECK(err)                                                                                     \
     if (err != cudaSuccess)                                                                                 \
