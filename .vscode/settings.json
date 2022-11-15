@@ -66,6 +66,8 @@
         "ENABLE_LOG": "OFF",
         "ENABLE_CPU": "ON",
         "ENABLE_CUDA": "ON",
-        "ENABLE_CUDNN": "ON"
+        "ENABLE_CUDNN": "ON",
+        "ENABLE_NVIDIA": "ON",
+        "ENABLE_ILUVATAR": "OFF"
     }
 }

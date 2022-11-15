@@ -43,7 +43,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "Debug"
+			"value" : "Release"
 		},
 		{
 			"name" : "CMAKE_CACHEFILE_DIR",
@@ -1118,6 +1118,18 @@
 			"value" : "ON"
 		},
 		{
+			"name" : "ENABLE_ILUVATAR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "enable iluvatar"
+				}
+			],
+			"type" : "STRING",
+			"value" : "OFF"
+		},
+		{
 			"name" : "ENABLE_LOG",
 			"properties" : 
 			[
@@ -1128,6 +1140,18 @@
 			],
 			"type" : "STRING",
 			"value" : "OFF"
+		},
+		{
+			"name" : "ENABLE_NVIDIA",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "enable nvidia"
+				}
+			],
+			"type" : "STRING",
+			"value" : "ON"
 		},
 		{
 			"name" : "convolution_backward_BINARY_DIR",

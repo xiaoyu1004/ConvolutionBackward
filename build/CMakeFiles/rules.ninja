@@ -7,14 +7,14 @@
 
 # =============================================================================
 # Project: convolution_backward
-# Configurations: Debug
+# Configurations: Release
 # =============================================================================
 # =============================================================================
 
 #############################################
 # Rule for compiling CUDA files.
 
-rule CUDA_COMPILER__convolution_backward_Debug
+rule CUDA_COMPILER__convolution_backward_Release
   depfile = $DEP_FILE
   deps = gcc
   command = /usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -x cu -c $in -o $out
@@ -24,7 +24,7 @@ rule CUDA_COMPILER__convolution_backward_Debug
 #############################################
 # Rule for compiling CXX files.
 
-rule CXX_COMPILER__convolution_backward_Debug
+rule CXX_COMPILER__convolution_backward_Release
   depfile = $DEP_FILE
   deps = gcc
   command = /usr/bin/g++-9 $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
@@ -34,7 +34,7 @@ rule CXX_COMPILER__convolution_backward_Debug
 #############################################
 # Rule for linking CXX executable.
 
-rule CXX_EXECUTABLE_LINKER__convolution_backward_Debug
+rule CXX_EXECUTABLE_LINKER__convolution_backward_Release
   command = $PRE_LINK && /usr/bin/g++-9 $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
   description = Linking CXX executable $TARGET_FILE
   restat = $RESTAT

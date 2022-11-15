@@ -1,14 +1,23 @@
 cmake_minimum_required(VERSION 3.10)
 project(convolution_backward LANGUAGES CXX)
 
-if(ENABLE_CUDA)
-    enable_language(CUDA)
-endif()
-
 option(ENABLE_LOG "enable log" ON)
 option(ENABLE_CPU "enable cpu" ON)
 option(ENABLE_CUDA "enable cuda" ON)
 option(ENABLE_CUDNN "enable cudnn" ON)
+
+option(ENABLE_NVIDIA "enable nvidia" ON)
+option(ENABLE_ILUVATAR "enable iluvatar" OFF)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mfma -msse -mavx")
+
+if(ENABLE_NVIDIA)
+    if(ENABLE_CUDA)
+        enable_language(CUDA)
+    endif()
+else()
+    include(${PROJECT_SOURCE_DIR}/cmake/CUDA.cmake)
+endif()
 
 if(ENABLE_LOG)
     add_definitions(-DENABLE_LOG)
@@ -37,8 +46,15 @@ set(srcs ./src/backward_filter.cpp
 if(ENABLE_CUDA)
     list(APPEND srcs ./src/cuda/backward_filter.cu)
 endif()
-add_executable(${PROJECT_NAME} ${srcs})
-target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/cuda/include)
+
+if(ENABLE_NVIDIA)
+    add_executable(${PROJECT_NAME} ${srcs})
+    target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/cuda/include)
+else()
+    cuda_add_executable(${PROJECT_NAME} ${srcs})
+    target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/corex/include)
+endif()
+
 if(ENABLE_CUDNN)
     target_link_libraries(${PROJECT_NAME} PRIVATE cudnn)
 endif()

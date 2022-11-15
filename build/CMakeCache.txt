@@ -21,7 +21,7 @@ CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //No help, variable specified on the command line.
-CMAKE_BUILD_TYPE:STRING=Debug
+CMAKE_BUILD_TYPE:STRING=Release
 
 //CUDA compiler
 CMAKE_CUDA_COMPILER:FILEPATH=/usr/local/cuda/bin/nvcc
@@ -209,8 +209,14 @@ ENABLE_CUDA:STRING=ON
 //enable cudnn
 ENABLE_CUDNN:STRING=ON
 
+//enable iluvatar
+ENABLE_ILUVATAR:STRING=OFF
+
 //enable log
 ENABLE_LOG:STRING=OFF
+
+//enable nvidia
+ENABLE_NVIDIA:STRING=ON
 
 //Value Computed by CMake
 convolution_backward_BINARY_DIR:STATIC=/home/jsshi/hongzhang.yu/ConvolutionBackward/build
