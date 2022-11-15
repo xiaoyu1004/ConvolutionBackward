@@ -44,7 +44,8 @@ set(srcs ./src/backward_filter.cpp
          ./src/main.cpp)
 
 if(ENABLE_CUDA)
-    list(APPEND srcs ./src/cuda/backward_filter.cu)
+    list(APPEND srcs ./src/cuda/backward_filter.cu
+                     ./src/cuda/backward_data.cu)
 endif()
 
 if(ENABLE_NVIDIA)
