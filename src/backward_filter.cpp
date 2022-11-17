@@ -77,13 +77,15 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     // init x
     for (int i = 0; i < x_size; ++i)
     {
-        h_x[i] = static_cast<float>(i % 19 - 11); // x_data[i % 280]
+        // h_x[i] = static_cast<float>(i % 19 - 11); // x_data[i % 280]
+        h_x[i] = dist(ge);
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
-        h_y[i] = static_cast<float>(i % 9 - 5); // 1.f
+        // h_y[i] = static_cast<float>(i % 9 - 5); // 1.f
+        h_y[i] = dist(ge);
     }
 
 #ifdef ENABLE_CUDA

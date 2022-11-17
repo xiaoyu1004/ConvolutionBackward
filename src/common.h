@@ -13,6 +13,12 @@
 #include <cstring>
 #include <iomanip>
 #include <cmath>
+#include <random>
+#include <chrono>
+
+static unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+static std::default_random_engine ge(seed);
+static std::normal_distribution<float> dist(0.f, 1.f);
 
 #define CUDA_CHECK(err)                                                                                     \
     if (err != cudaSuccess)                                                                                 \
