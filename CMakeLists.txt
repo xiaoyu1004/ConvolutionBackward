@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(convolution_backward LANGUAGES CXX)
+project(convolution_backward LANGUAGES CUDA CXX)
 
 option(ENABLE_LOG "enable log" ON)
 option(ENABLE_CPU "enable cpu" ON)
@@ -12,13 +12,11 @@ option(SW_HOME "enable sw_home" OFF)
 
 # cmake .. -DENABLE_LOG=OFF -DENABLE_CPU=ON -DENABLE_CUDA=ON -DENABLE_CUDNN=ON -DENABLE_NVIDIA=OFF -DENABLE_ILUVATAR=ON -DSW_HOME=ON
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mfma -msse -mavx")
+if(ENABLE_CUDA)
+    enable_language(CUDA)
+endif()
 
-if(ENABLE_NVIDIA)
-    if(ENABLE_CUDA)
-        enable_language(CUDA)
-    endif()
-else()
+if(ENABLE_ILUVATAR)
     if (SW_HOME)
         set(ROOT_PATH "/opt/sw_home/local/" CACHE PATH "cuda installation root dir")
         set(CUDA_TOOLKIT_ROOT_DIR ${ROOT_PATH}/cuda CACHE PATH "root path to cuda/lib64 cuda/bin etc")
@@ -28,9 +26,15 @@ else()
     endif()
 
     set(COMPILER_PATH ${ROOT_PATH}/bin CACHE PATH "compiler binary path")
-    set(CMAKE_CXX_COMPILER ${COMPILER_PATH}/clang++ CACHE PATH "CXX compiler binary path")
     set(CMAKE_C_COMPILER ${COMPILER_PATH}/clang CACHE PATH "C compiler binary path")
+    set(CMAKE_CXX_COMPILER ${COMPILER_PATH}/clang++ CACHE PATH "CXX compiler binary path")
     set(CUDA_ARCH "ivcore11" CACHE STRING "CUDA architecture.")
+
+    message(STATUS "ROOT_PATH: ${ROOT_PATH}")
+    message(STATUS "CUDA_TOOLKIT_ROOT_DIR: ${CUDA_TOOLKIT_ROOT_DIR}")
+    message(STATUS "COMPILER_PATH: ${COMPILER_PATH}")
+    message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
+    message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
 
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +47,8 @@ else()
 
     include(${PROJECT_SOURCE_DIR}/cmake/CUDA.cmake)
 endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 if(ENABLE_LOG)
     add_definitions(-DENABLE_LOG)
@@ -78,7 +84,7 @@ if(ENABLE_NVIDIA)
     target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/cuda/include)
 else()
     cuda_add_executable(${PROJECT_NAME} ${srcs})
-    target_include_directories(${PROJECT_NAME} PRIVATE ./src /usr/local/corex/include)
+    target_include_directories(${PROJECT_NAME} PRIVATE ./src ${CUDA_TOOLKIT_ROOT_DIR}/include)
 endif()
 
 if(ENABLE_CUDNN)
