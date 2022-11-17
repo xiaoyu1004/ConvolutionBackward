@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(convolution_backward LANGUAGES CUDA CXX)
+project(convolution_backward LANGUAGES CXX)
 
 option(ENABLE_LOG "enable log" ON)
 option(ENABLE_CPU "enable cpu" ON)
@@ -12,7 +12,7 @@ option(SW_HOME "enable sw_home" OFF)
 
 # cmake .. -DENABLE_LOG=OFF -DENABLE_CPU=ON -DENABLE_CUDA=ON -DENABLE_CUDNN=ON -DENABLE_NVIDIA=OFF -DENABLE_ILUVATAR=ON -DSW_HOME=ON
 
-if(ENABLE_CUDA)
+if(ENABLE_CUDA AND !SW_HOME)
     enable_language(CUDA)
 endif()
 

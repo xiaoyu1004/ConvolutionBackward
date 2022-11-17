@@ -70,6 +70,6 @@
         "ENABLE_CUDNN": "ON",
         "ENABLE_NVIDIA": "OFF",
         "ENABLE_ILUVATAR": "ON",
-        "SW_HOME": "ON"
+        "SW_HOME": "OFF"
     }
 }
