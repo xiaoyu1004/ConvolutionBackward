@@ -78,14 +78,15 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     for (int i = 0; i < x_size; ++i)
     {
         // h_x[i] = static_cast<float>(i % 19 - 11); // x_data[i % 280]
-        h_x[i] = dist(ge);
+        // h_x[i] = dist(ge);
+        h_x[i] = random_data[i % 6];
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
         // h_y[i] = static_cast<float>(i % 9 - 5); // 1.f
-        h_y[i] = dist(ge);
+        h_y[i] = random_data[i % 6];
     }
 
 #ifdef ENABLE_CUDA
@@ -149,9 +150,11 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
 #ifdef ENABLE_CUDA
     // compare
     float L2 = 0.F;
+    float max_diff = 0.f;
     for (int i = 0; i < w_size; ++i)
     {
         L2 += std::pow(h_w[i] - h_ref_w[i], 2);
+        max_diff = std::max(std::abs(h_w[i] - h_ref_w[i]), max_diff);
 
         // if (err > 1e-1f)
         // {
@@ -164,7 +167,7 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     bool bres = L2 > 1e-2f;
     if (bres)
     {
-        std::cout << std::setprecision(10) << "ERROR: " << L2 << std::endl;
+        std::cout << std::setprecision(10) << "ERROR! L2: " << L2 << " max diff: " << max_diff << std::endl;
     }
 
     std::cout << "compare " << (bres ? "failed" : "pass") << "!" << std::endl;
