@@ -8,6 +8,9 @@ option(ENABLE_CUDNN "enable cudnn" ON)
 
 option(ENABLE_NVIDIA "enable nvidia" ON)
 option(ENABLE_ILUVATAR "enable iluvatar" OFF)
+option(SW_HOME "enable sw_home" OFF)
+
+# cmake .. -DENABLE_LOG=OFF -DENABLE_CPU=ON -DENABLE_CUDA=ON -DENABLE_CUDNN=ON -DENABLE_NVIDIA=OFF -DENABLE_ILUVATAR=ON -DSW_HOME=ON
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mfma -msse -mavx")
 
@@ -16,8 +19,13 @@ if(ENABLE_NVIDIA)
         enable_language(CUDA)
     endif()
 else()
-    set(ROOT_PATH "/usr/local/corex/" CACHE PATH "cuda installation root dir")
-    set(CUDA_TOOLKIT_ROOT_DIR ${ROOT_PATH} CACHE PATH "root path to cuda/lib64 cuda/bin etc")
+    if (SW_HOME)
+        set(ROOT_PATH "/opt/sw_home/local/" CACHE PATH "cuda installation root dir")
+        set(CUDA_TOOLKIT_ROOT_DIR ${ROOT_PATH} CACHE PATH "root path to cuda/lib64 cuda/bin etc")
+    else()
+        set(ROOT_PATH "/usr/local/corex/" CACHE PATH "cuda installation root dir")
+        set(CUDA_TOOLKIT_ROOT_DIR ${ROOT_PATH} CACHE PATH "root path to cuda/lib64 cuda/bin etc")
+    endif()
 
     set(COMPILER_PATH ${ROOT_PATH}/bin CACHE PATH "compiler binary path")
     set(CMAKE_CXX_COMPILER ${COMPILER_PATH}/clang++ CACHE PATH "CXX compiler binary path")
