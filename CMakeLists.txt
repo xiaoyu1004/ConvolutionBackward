@@ -48,7 +48,7 @@ if(ENABLE_ILUVATAR)
     include(${PROJECT_SOURCE_DIR}/cmake/CUDA.cmake)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mfma -mavx -msse4")
 
 if(ENABLE_LOG)
     add_definitions(-DENABLE_LOG)

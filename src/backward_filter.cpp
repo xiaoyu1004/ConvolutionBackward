@@ -79,14 +79,14 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     {
         // h_x[i] = static_cast<float>(i % 19 - 11); // x_data[i % 280]
         // h_x[i] = dist(ge);
-        h_x[i] = random_data[i % 6];
+        h_x[i] = h_x_demo[i % 1000];
     }
 
     // init y
     for (int i = 0; i < y_size; ++i)
     {
         // h_y[i] = static_cast<float>(i % 9 - 5); // 1.f
-        h_y[i] = random_data[i % 6];
+        h_y[i] = h_y_demo[i % 1000];
     }
 
 #ifdef ENABLE_CUDA
