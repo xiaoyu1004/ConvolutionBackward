@@ -129,7 +129,7 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     CUDNN_CHECK(cudnnCreateConvolutionDescriptor(&convDesc));
     CUDNN_CHECK(cudnnSetConvolution2dDescriptor(convDesc, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 
-    cudnnConvolutionBwdFilterAlgo_t algo = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED;
+    cudnnConvolutionBwdFilterAlgo_t algo = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1; // CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED
     size_t workspace_size;
     CUDNN_CHECK(cudnnGetConvolutionBackwardFilterWorkspaceSize(handle, xDesc, yDesc, convDesc, wDesc, algo, &workspace_size));
     float *workSpace;

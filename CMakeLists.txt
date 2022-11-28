@@ -48,7 +48,8 @@ if(ENABLE_ILUVATAR)
     include(${PROJECT_SOURCE_DIR}/cmake/CUDA.cmake)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mfma -mavx -msse4")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mfma -mavx -msse4")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 if(ENABLE_LOG)
     add_definitions(-DENABLE_LOG)
@@ -90,3 +91,5 @@ endif()
 if(ENABLE_CUDNN)
     target_link_libraries(${PROJECT_NAME} PRIVATE cudart cudnn)
 endif()
+
+add_subdirectory(test)
