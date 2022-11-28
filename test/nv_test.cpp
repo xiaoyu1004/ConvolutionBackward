@@ -1,8 +1,8 @@
 #include "common.h"
-#include "backward_filter.h"
 
 void ConvolutionBackwardFilterDnn(int input_n, int input_c, int input_h, int input_w,
-                                  int output_c, int kernel_h, int kernel_w,
+                                  int output_c, int output_h, int output_w,
+                                  int kernel_h, int kernel_w,
                                   int stride_h, int stride_w,
                                   int pad_h, int pad_w,
                                   int dilation_h, int dilation_w,
@@ -41,6 +41,7 @@ void ConvolutionBackwardFilterDnn(int input_n, int input_c, int input_h, int inp
     CUDNN_CHECK(cudnnDestroyTensorDescriptor(xDesc));
     CUDNN_CHECK(cudnnDestroyTensorDescriptor(yDesc));
     CUDNN_CHECK(cudnnDestroyConvolutionDescriptor(convDesc));
+    CUDA_CHECK(cudaFree(workSpace));
 
     CUDA_CHECK(cudaDeviceSynchronize());
 }
@@ -111,52 +112,78 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     cudnnConvolutionBwdFilterAlgo_t algo2 = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED;
 
     ConvolutionBackwardFilterDnn(input_n, input_c, input_h, input_w,
-                                 output_c, kernel_h, kernel_w,
+                                 output_c, output_h, output_w,
+                                 kernel_h, kernel_w,
                                  stride_h, stride_w,
                                  pad_h, pad_w,
                                  dilation_h, dilation_w,
                                  group,
-                                 algo,
-                                 d_x, d_y, d_w);
-    CUDA_CHECK(cudaMemcpy(h_ref_w, d_w, w_size * sizeof(float), cudaMemcpyDeviceToHost));
-
-    ConvolutionBackwardFilterDnn(input_n, input_c, input_h, input_w,
-                                 output_c, kernel_h, kernel_w,
-                                 stride_h, stride_w,
-                                 pad_h, pad_w,
-                                 dilation_h, dilation_w,
-                                 group,
-                                 algo,
+                                 algo1,
                                  d_x, d_y, d_w);
     CUDA_CHECK(cudaMemcpy(h_w, d_w, w_size * sizeof(float), cudaMemcpyDeviceToHost));
+
+    ConvolutionBackwardFilterDnn(input_n, input_c, input_h, input_w,
+                                 output_c, output_h, output_w,
+                                 kernel_h, kernel_w,
+                                 stride_h, stride_w,
+                                 pad_h, pad_w,
+                                 dilation_h, dilation_w,
+                                 group,
+                                 algo2,
+                                 d_x, d_y, d_w);
+    CUDA_CHECK(cudaMemcpy(h_ref_w, d_w, w_size * sizeof(float), cudaMemcpyDeviceToHost));
 #endif
 #endif
 
 #ifdef ENABLE_CPU
 #ifdef ENABLE_CUDA
     // compare
-    float L2 = 0.F;
-    float max_diff = 0.f;
-    for (int i = 0; i < w_size; ++i)
+    std::cout << "dw:\n";
+    size_t diff_count = 0;
+    float max_diff = 0;
+    int max_idx = 0;
+
+    for (int i = 0; i < w_size; i++)
     {
-        L2 += std::pow(h_w[i] - h_ref_w[i], 2);
-        max_diff = std::max(std::abs(h_w[i] - h_ref_w[i]), max_diff);
-
-        // if (err > 1e-1f)
-        // {
-        //     std::cout << std::setprecision(10) << "ERROR: h_w[" << i << "]=" << h_w[i] << " != h_ref_w[" << i << "]=" << h_ref_w[i] << std::endl;
-        //     std::terminate();
-        // }
+        float delta = std::abs(h_w[i] - h_ref_w[i]) / std::abs(h_ref_w[i]);
+        if (delta > 1e-3f)
+        {
+            diff_count++;
+            std::cout << i << " algo1(" << h_w[i] << ") algo5(" << h_ref_w[i] << "), delta: " << delta << "\n";
+            if (delta > max_diff)
+            {
+                max_diff = delta;
+                max_idx = i;
+            }
+        }
     }
+    std::cout << "\nTotal element: " << w_size << ", diff element: " << diff_count << ", max_diff: " << max_diff << ", max_idx: " << max_idx << ", compute: " << h_w[max_idx] << ", expext: " << h_ref_w[max_idx] << std::endl;
+    std::cout << "diff means abs(compute_value - expect_value) / abs(expect_value) > 1e-3f\n";
 
-    L2 = std::sqrt(L2);
-    bool bres = L2 > 1e-2f;
-    if (bres)
-    {
-        std::cout << std::setprecision(10) << "ERROR! L2: " << L2 << " max diff: " << max_diff << std::endl;
-    }
+    std::cout << std::endl;
 
-    std::cout << "compare " << (bres ? "failed" : "pass") << "!" << std::endl;
+    // float L2 = 0.F;
+    // float max_diff = 0.f;
+    // for (int i = 0; i < w_size; ++i)
+    // {
+    //     L2 += std::pow(h_w[i] - h_ref_w[i], 2);
+    //     max_diff = std::max(std::abs(h_w[i] - h_ref_w[i]), max_diff);
+
+    //     // if (err > 1e-1f)
+    //     // {
+    //     //     std::cout << std::setprecision(10) << "ERROR: h_w[" << i << "]=" << h_w[i] << " != h_ref_w[" << i << "]=" << h_ref_w[i] << std::endl;
+    //     //     std::terminate();
+    //     // }
+    // }
+
+    // L2 = std::sqrt(L2);
+    // bool bres = L2 > 1e-2f;
+    // if (bres)
+    // {
+    //     std::cout << std::setprecision(10) << "ERROR! L2: " << L2 << " max diff: " << max_diff << std::endl;
+    // }
+
+    // std::cout << "compare " << (bres ? "failed" : "pass") << "!" << std::endl;
 #endif
 #endif
 
@@ -165,12 +192,6 @@ void ConvolutionBackwardFilter(int input_n, int input_c, int input_h, int input_
     CUDA_CHECK(cudaFree(d_x));
     CUDA_CHECK(cudaFree(d_w));
     CUDA_CHECK(cudaFree(d_y));
-#endif
-
-#ifdef ENABLE_CUDA
-#ifdef ENABLE_CUDNN
-    CUDA_CHECK(cudaFree(workSpace));
-#endif
 #endif
 
     delete[] h_x;
